@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="css/styles/jqx.base.css">
+        <link rel="stylesheet" type="text/css" href="css/styles/jqx.darkblue.css">
+        <link rel="stylesheet" type="text/css" href="css/app.css">
+        <title>D&amp;D Beyond to Fantasy Grounds Character Converter</title>
+    </head>
+    <body>
+      <div class="container">
+        <div id="header">
+          D&amp;D Beyond to Fantasy Grounds Character Converter
+        </div>
+        <b>PASTE DATA HERE:</b><br />
+        <textarea id="charJSON" cols="150" rows="10"></textarea><br /><br />
+        <button id="get-data">Parse JSON data</button>&nbsp;&nbsp;&nbsp;<button id="dlChar">Download XML</button>
+        <textarea id="textHere" cols="150" rows="10"></textarea><br />
+        <center><h2>Instructions</h2></center>
+        <hr />
+        <pre>
+Log into your <a href="https://www.dndbeyond.com/my-content/characters" target="_blank">D&amp;D Beyond Account</a>.
+Move your mouse over the 'Characters' tab at the top of the window and select 'My Characters'.
+Find the character you want to convert and click 'View'.
+Take a look at the Address bar, it should look something like:
+https://www.dndbeyond.com/profile/YourUserName/characters/8675309
+
+At the end of this ULR, add '/json/', so it looks like this:
+https://www.dndbeyond.com/profile/YourUserName/characters/8675309/json/
+Then hit &lt;enter&gt;/&lt;return&gt;
+
+Put your cursor anywhere in the text and hit Ctrl-a (Windows) or Cmd-a (Mac) to select all the data.
+Next hit Ctrl-c (Windows) or Cmd-c (Mac) to Copy the data to the clipboard.
+After you've done that, come back to this page and put your mouse cursor inside the box that's labeled: <b>PASTE DATA HERE</b>
+
+Now hit Ctrl-v (Windows) or Cmd-v (Mac) to Paste the data from the clipboard to the box.
+It will take a few seconds or more (30?) in order for the data to populate.
+This all depends on how fast your computer is, as it's pasting a whole lot of data.
+
+Next, click the 'Parse JSON data' button, and after a few seconds, the lower box should populate.
+Click the 'Download XML' button and the data that's in the lower box will be saved to your computer.
+
+This file is the one that you want to import into Fantasy Grounds.
+        </pre>
+      </div>
+    </body>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/jqx-all.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/app.js"></script>
+</html>
