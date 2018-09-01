@@ -21,14 +21,11 @@
        (All contributions are donated to Hospice, or go here: https://www.hollandhospice.org/giving/donate-now/)
 */
 
-var fullChar = "";
 var startXML = "<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n";
 startXML += "<root version=\"3.3\" release=\"8|CoreRPG:3\">\n";
 startXML += "\t<character>\n";
 var endXML = "\t</character>\n</root>\n";
 var allXML = "";
-
-
 
 charSpellSlots1 = 0;
 charSpellSlots2 = 0;
@@ -40,48 +37,83 @@ charSpellSlots7 = 0;
 charSpellSlots8 = 0;
 charSpellSlots9 = 0;
 
-var charName = "";
-var charGender = "";
-var charDeity = "";
-var charAge = "";
-var charEyes = "";
-var charHair = "";
-var charSkin = "";
-var charHeight = "";
-var charWeight = "";
+holdFeats = [];
+holdTraits = [];
+holdFeatures = [];
+holdProf = [];
+
 var hasAppear = 0;
+
+var source = [
+    "Barakas(1387127)",
+    "Baradun(1215852)",
+    "Dragonborn Paladin(4925896)",
+    "Barney Eldritch Knight(4908553)",
+    "Druid4Cleric2Paladin1(4819411)",
+    "LestherisWizard(4177317)",
+    "LH Bard(3719212)",
+    "ArcaneTrickster3(4908071)"
+];
 
 /* * * * * * * * */
 const _ABILITIES = {1:'STR',2:'DEX',3:'CON',4:'INT',5:'WIS',6:'CHA'};
-const _ABILITY = {'STR': 'strength', 'DEX': 'dexterity', 'CON': 'constitution', 'INT': 'intelligence', 'WIS': 'wisdom', 'CHA': 'charisma'}
-const skills = ['acrobatics', 'animal_handling', 'arcana', 'athletics', 'deception', 'history', 'insight', 'intimidation', 'investigation', 'medicine', 'nature', 'perception', 'performance', 'persuasion', 'religion', 'sleight_of_hand', 'stealth', 'survival']
+const _ABILITY = {'STR': 'strength', 'DEX': 'dexterity', 'CON': 'constitution', 'INT': 'intelligence', 'WIS': 'wisdom', 'CHA': 'charisma'};
+const justAbilities = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+
+const skills = ['acrobatics', 'animal_handling', 'arcana', 'athletics', 'deception', 'history', 'insight', 'intimidation', 'investigation', 'medicine', 'nature', 'perception', 'performance', 'persuasion', 'religion', 'sleight_of_hand', 'stealth', 'survival'];
 const skillsRef = ['dexterity', 'wisdom', 'intelligence', 'strength', 'charisma', 'intelligence', 'wisdom', 'charisma', 'intelligence', 'wisdom', 'intelligence', 'wisdom', 'charisma', 'charisma', 'intelligence', 'dexterity', 'dexterity', 'wisdom'];
 const simpleMeleeWeapon = ["club","dagger","greatclub","handaxe","javelin","light_hammer","mace","quartrsfaff","sickle","spear"];
 const simpleRangedWeapon = ["crossbow_light","dart","showtbow","sling"];
 const martialMeleeWeapon = ["battleaxe","flail","glaive","greataxe","greatsword","halberd","lance","longsword","maul","morningstar","pike","rapier","scimitar","shortsword","trident","war_pick","warhammer","whip"];
 const martialRangedWeapon = ["blowgun","crossbow_hand","crossbow_heavy","longbow","net"];
-var class_spells = [];
-var beyond_caller = {};
+const tieflingRacialTraits = ["darkvision","hellish_resistance"];
+
 var object;
+
+const fullDexArmor = ["padded","leather","studded_leather"];
+const max3DexArmor = [];
+const max2DexArmor = ["hide","chain_shirt","scale_mail","breastplate","half_plate"];
+const noDexArmor = ["ring_mail","chain_mail","splint","plate"];
+const disStealth = ["padded","scale_mail","half_plate","ring_mail","chain_mail","splint","plate"];
 
 /* * * * * * * * * * */
 
+glCharID = "";
+
 $(function() {
-    //$('#charJSON').val(barakas);
-    $('#get-data').click(function () {
-        inputData = $.parseJSON($('#charJSON').val());
-        //console.log(inputData);
-        //$.getJSON('LightfootHalflingBard.json', function (data) {
-        //$.getJSON('barakas.json', function (data) {
-        //$.getJSON(inputData, function (data) {
-        //    parseCharacter(data);
-        //});
-        parseCharacter(inputData);
+    $("#grabChar").jqxButton({ width: '150px', height: '35px', theme: 'darkblue' });
+    $('#textHere').jqxTextArea({ theme: 'darkblue', width: 750, height: 150, placeHolder: 'XML will appear here.' });
+    $("#getcharID").jqxInput({ placeHolder: "Enter Character ID", height: '35px', width: 200, minLength: 4, theme: 'darkblue'});
+    $("#dlChar").jqxButton({ width: '120px', height: '35px', theme: 'darkblue' });
+    //$("#popCharID").jqxDropDownList({ source: source, placeHolder: "Select Item", width: 250, height: 35, theme: "darkblue"});
+    //$('#tabs').jqxTabs({ width: '100%', height: '100%', position: 'top'});   
+    
+    $('#grabChar').on("click", function() {
+        if(!$('#getcharID').val().match(/\d+/)) {
+            alert("Um, please enter your Character ID");
+        } else {
+            $.ajax({
+                data: { charID: $('#getcharID').val() },
+                url: 'scripts/getChar.php',
+                method: 'GET',
+                success: function(data) {
+                    try {
+                        parseCharacter($.parseJSON(data));
+                    } catch(e) {
+                        alert("Something went wrong, it's us, not you. (Well, it probably is you, but we would never assume that.)");
+                        console.error(e);
+                    }
+                },
+                failure: function(msg) {
+                    alert("Something happened, I couldn't get any data for " + $('#getcharID').val());
+                }
+            });
+        }
     });
 
     $("#dlChar").on("click", function() {
         if ($("#textHere").val() == "") {
-            alert("You need to parse the URL first.");
+            alert("You need to load a character first.");
             return;
         }
         var ts = Math.round((new Date()).getTime() / 1000);
@@ -92,15 +124,17 @@ $(function() {
         });
         invokeSaveAsDialog(textFile, pcFilename);
     });
-    //$('pre').hide();
+
+    //$("#popCharID").on("change", function(event) {  
+    //    var firstNumber = event.args.item.label.indexOf("(");
+    //    var secondNumber = event.args.item.label.indexOf(")");
+    //    glCharID = event.args.item.label.substring(firstNumber + 1, secondNumber);
+    //    $('#getcharID').val(glCharID);
+    //});
 });
 
-
-
 function parseCharacter(inputChar) {
-    //console.log(input);
-    //var thisChar = JSON.stringify(input);
-    var character = inputChar.character;
+    var character = jQuery.extend(true, {}, inputChar);
 
     // STR(1): 13
     // DEX(2): 12
@@ -108,52 +142,22 @@ function parseCharacter(inputChar) {
     // INT(4): 9
     // WIS(5): 10
     // CHA(6): 17
-    //console.log(input.character.name);
     allXML = startXML;
-    buildXML = "";
+    buildXML = "\t\t<!--" + glCharID + "-->\n";
     buildXML += "\t\t<abilities>\n";
-    buildXML += "\t\t\t<strength>\n";
-    buildXML += "\t\t\t\t<bonus type=\"number\">" + parseInt((character.bonusStats[0].value == null ? 0 : character.bonusStats[0].value)) + "</bonus>\n";
-    //buildXML += "\t\t\t\t<save type=\"number\">" + parseInt(abilCHA[1]) + "</save>\n";
-    buildXML += "\t\t\t\t<savemodifier type=\"number\">0</savemodifier>\n";
-    //buildXML += "\t\t\t\t<saveprof type=\"number\">" + parseInt(abilCHA[3]) + "</saveprof>\n";
-    buildXML += "\t\t\t\t<score type=\"number\">" + parseInt(getTotalAbilityScore(character, 1)) + "</score>\n";
-    buildXML += "\t\t\t</strength>\n";
-    buildXML += "\t\t\t<dexterity>\n";
-    buildXML += "\t\t\t\t<bonus type=\"number\">" + parseInt(character.bonusStats[1].value == null ? 0 : character.bonusStats[1].value) + "</bonus>\n";
-    //buildXML += "\t\t\t\t<save type=\"number\">" + parseInt(abilCHA[1]) + "</save>\n";
-    buildXML += "\t\t\t\t<savemodifier type=\"number\">0</savemodifier>\n";
-    //buildXML += "\t\t\t\t<saveprof type=\"number\">" + parseInt(abilCHA[3]) + "</saveprof>\n";
-    buildXML += "\t\t\t\t<score type=\"number\">" + parseInt(getTotalAbilityScore(character, 2)) + "</score>\n";
-    buildXML += "\t\t\t</dexterity>\n";
-    buildXML += "\t\t\t<constitution>\n";
-    buildXML += "\t\t\t\t<bonus type=\"number\">" + parseInt(character.bonusStats[2].value == null ? 0 : character.bonusStats[2].value) + "</bonus>\n";
-    //buildXML += "\t\t\t\t<save type=\"number\">" + parseInt(abilCHA[1]) + "</save>\n";
-    buildXML += "\t\t\t\t<savemodifier type=\"number\">0</savemodifier>\n";
-    //buildXML += "\t\t\t\t<saveprof type=\"number\">" + parseInt(abilCHA[3]) + "</saveprof>\n";
-    buildXML += "\t\t\t\t<score type=\"number\">" + parseInt(getTotalAbilityScore(character, 3)) + "</score>\n";
-    buildXML += "\t\t\t</constitution>\n";
-    buildXML += "\t\t\t<intelligence>\n";
-    buildXML += "\t\t\t\t<bonus type=\"number\">" + parseInt(character.bonusStats[3].value == null ? 0 : character.bonusStats[3].value) + "</bonus>\n";
-    //buildXML += "\t\t\t\t<save type=\"number\">" + parseInt(abilCHA[1]) + "</save>\n";
-    buildXML += "\t\t\t\t<savemodifier type=\"number\">0</savemodifier>\n";
-    //buildXML += "\t\t\t\t<saveprof type=\"number\">" + parseInt(abilCHA[3]) + "</saveprof>\n";
-    buildXML += "\t\t\t\t<score type=\"number\">" + parseInt(getTotalAbilityScore(character, 4)) + "</score>\n";
-    buildXML += "\t\t\t</intelligence>\n";
-    buildXML += "\t\t\t<wisdom>\n";
-    buildXML += "\t\t\t\t<bonus type=\"number\">" + parseInt(character.bonusStats[4].value == null ? 0 : character.bonusStats[4].value) + "</bonus>\n";
-    //buildXML += "\t\t\t\t<save type=\"number\">" + parseInt(abilCHA[1]) + "</save>\n";
-    buildXML += "\t\t\t\t<savemodifier type=\"number\">0</savemodifier>\n";
-    //buildXML += "\t\t\t\t<saveprof type=\"number\">" + parseInt(abilCHA[3]) + "</saveprof>\n";
-    buildXML += "\t\t\t\t<score type=\"number\">" + parseInt(getTotalAbilityScore(character, 5)) + "</score>\n";
-    buildXML += "\t\t\t</wisdom>\n";
-    buildXML += "\t\t\t<charisma>\n";
-    buildXML += "\t\t\t\t<bonus type=\"number\">" + parseInt(character.bonusStats[5].value == null ? 0 : character.bonusStats[5].value) + "</bonus>\n";
-    //buildXML += "\t\t\t\t<save type=\"number\">" + parseInt(abilCHA[1]) + "</save>\n";
-    buildXML += "\t\t\t\t<savemodifier type=\"number\">0</savemodifier>\n";
-    //buildXML += "\t\t\t\t<saveprof type=\"number\">" + parseInt(abilCHA[3]) + "</saveprof>\n";
-    buildXML += "\t\t\t\t<score type=\"number\">" + parseInt(getTotalAbilityScore(character, 6)) + "</score>\n";
-    buildXML += "\t\t\t</charisma>\n";
+    justAbilities.some(function(thisAbility, i) {
+        buildXML += "\t\t\t<" + thisAbility + ">\n";
+        buildXML += "\t\t\t\t<bonus type=\"number\">" + parseInt(character.bonusStats[i].value == null ? 0 : character.bonusStats[i].value) + "</bonus>\n";
+        //buildXML += "\t\t\t\t<save type=\"number\">" + parseInt(abilCHA[i]) + "</save>\n";
+        buildXML += "\t\t\t\t<savemodifier type=\"number\">0</savemodifier>\n";
+        character.modifiers.class.some(function(thisMod, i) {
+            if(thisMod.subType == thisAbility + "-saving-throws") {
+                buildXML += "\t\t\t\t<saveprof type=\"number\">1</saveprof>\n";
+            }
+        });
+        buildXML += "\t\t\t\t<score type=\"number\">" + parseInt(getTotalAbilityScore(character, i + 1)) + "</score>\n";
+        buildXML += "\t\t\t</" + thisAbility + ">\n";
+    });
     buildXML += "\t\t</abilities>\n";
 
     buildXML += "\t\t<name type=\"string\">" + character.name + "</name>\n";
@@ -202,13 +206,6 @@ function parseCharacter(inputChar) {
     }
     buildXML += "\t\t<alignment type=\"string\">" + charAlign + "</alignment>\n";    
 
-    // baseHitPoints
-    buildXML += "\t\t<hp>\n";
-    //buildXML += "\t\t\t<deathsavefail type=\"number\">" + parseInt(charDSF) + "</deathsavefail>\n";
-    //buildXML += "\t\t\t<deathsavesuccess type=\"number\">" + parseInt(charDSS) + "</deathsavesuccess>\n";
-    buildXML += "\t\t\t<total type=\"number\">" + parseInt(character.baseHitPoints) + "</total>\n";
-    buildXML += "\t\t</hp>\n";
-
     charWalk = character.race.weightSpeeds.normal.walk;
     //var speedMods = getObjects(character, 'subType', 'speed');
     buildXML += "\t\t<speed>\n";
@@ -253,16 +250,17 @@ function parseCharacter(inputChar) {
     // Attempt at skill list
     idCount = 1;
     hasHalf = 0;
+    halfProf = false;
     var halfprof = getObjects(character, 'type', 'half-proficiency');
     for (var x in halfprof) {
         var hfprof = halfprof[x];
-        var type = hfprof.subType
+        var type = hfprof.subType;
         if(type == 'ability-checks') {
             hasHalf = 1;
         }
     }
     buildXML += "\t\t<skilllist>\n";
-    skills.forEach(function(element) {
+    skills.some(function(element) {
         thisIteration = pad(idCount, 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
         buildXML += "\t\t\t\t<misc type=\"number\">0</misc>\n";
@@ -283,7 +281,7 @@ function parseCharacter(inputChar) {
         
         var proficiencies = getObjects(character, 'type', 'proficiency');
         if(proficiencies != null) {
-            proficiencies.forEach(function(prof) {
+            proficiencies.some(function(prof) {
                 var skill = prof.subType.replace(/-/g, '_');
                 if(skill == element) {
                     addThisLine = "\t\t\t\t<prof type=\"number\">1</prof>\n";
@@ -306,9 +304,17 @@ function parseCharacter(inputChar) {
 
     buildXML += "\t\t<classes>\n";
     totalLevels = 0;
-    character.classes.forEach(function(current_class, i) {
+    totalHP = 0;
+    character.classes.some(function(current_class, i) {
         thisClass = current_class.definition.name.toLowerCase();
-        totalLevels += 1;
+        //console.log(thisClass);
+        if(current_class.isStartingClass == true) {
+            totalHP += current_class.definition.hitDice + ((current_class.definition.hitDice / 2) + 1) * (current_class.level - 1);
+        } else {
+            totalHP += ((current_class.definition.hitDice / 2) + 1) * current_class.level;
+        }
+        //console.log(totalHP);
+        totalLevels += current_class.level;
         thisIteration = pad(i + 1, 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
         buildXML += "\t\t\t\t<hddie type=\"dice\">";
@@ -323,8 +329,15 @@ function parseCharacter(inputChar) {
         //console.log(thisClass);
         if((thisClass == "bard") || (thisClass == "cleric") || (thisClass == "druid")  || (thisClass == "sorcerer") || (thisClass == "warlock")  || (thisClass == "wizard")) {
             buildXML += "\t\t\t\t<casterlevelinvmult type=\"number\">1</casterlevelinvmult>\n";
+        } else if ((thisClass == "paladin" || thisClass == "ranger") && current_class.level >= 2) {
+            buildXML += "\t\t\t\t<casterlevelinvmult type=\"number\">2</casterlevelinvmult>\n";
+        } else if ((thisClass == "rogue" || thisClass == "fighter") && current_class.level >= 3) {
+            if(current_class.hasOwnProperty("subclassDefinition")) {
+                if(current_class.subclassDefinition.name == "Arcane Trickster" || current_class.subclassDefinition.name == "Eldritch Knight") {
+                    buildXML += "\t\t\t\t<casterlevelinvmult type=\"number\">3</casterlevelinvmult>\n";
+                }
+            }
         }
-
         buildXML += "\t\t\t\t<level type=\"number\">" + current_class.level + "</level>\n";
         buildXML += "\t\t\t\t<shortcut type=\"windowreference\">\n";
         buildXML += "\t\t\t\t\t<class>reference_class</class>\n";
@@ -334,9 +347,69 @@ function parseCharacter(inputChar) {
     });
     buildXML += "\t\t</classes>\n";
 
+    idCount = 1;
+    hasHalf = 0;
+    halfProf = false;
+    var halfprof = getObjects(character, 'type', 'half-proficiency');
+    for (var x in halfprof) {
+        var hfprof = halfprof[x];
+        var type = hfprof.subType;
+        if(type == "initiative") {
+            halfProf = true;
+            buildXML += "\t\t\t<initiative>\n";
+            switch (totalLevels) {
+                case 1: case 2: case 3: case 4:
+                    buildXML += "\t\t\t\t<misc type=\"number\">1</misc>\n";
+                    buildXML += "\t\t\t\t<profbonus type=\"number\">2</profbonus>\n";
+                    break;
+                case 5: case 6: case 7: case 8:
+                    buildXML += "\t\t\t\t<misc type=\"number\">1</misc>\n";
+                    buildXML += "\t\t\t\t<profbonus type=\"number\">3</profbonus>\n";
+                    break;
+                case 9: case 10: case 11: case 12:
+                    buildXML += "\t\t\t\t<misc type=\"number\">2</misc>\n";
+                    buildXML += "\t\t\t\t<profbonus type=\"number\">4</profbonus>\n";
+                    break;
+                case 13: case 14: case 15: case 16:
+                    buildXML += "\t\t\t\t<misc type=\"number\">2</misc>\n";
+                    buildXML += "\t\t\t\t<profbonus type=\"number\">5</profbonus>\n";
+                    break;
+                case 17: case 18: case 19: case 20:
+                    buildXML += "\t\t\t\t<misc type=\"number\">3</misc>\n";
+                    buildXML += "\t\t\t\t<profbonus type=\"number\">6</profbonus>\n";
+                    break;
+                default:
+                    buildXML += "\t\t\t\t<misc type=\"number\">0</misc>\n";
+            }
+			
+			buildXML += "\t\t\t\t<temporary type=\"number\">0</temporary>\n";
+			//<total type="number">45</total>
+		    buildXML += "\t\t\t\t</initiative>\n";
+        }
+    }
+
+    // baseHitPoints
+    //console.log("Total levels: " + totalLevels);
+    //console.log("Char CON: " + Math.floor( ( ( getTotalAbilityScore(character, 3) - 10 ) / 2 ) ));
+    //console.log("Base HP: " + character.baseHitPoints);
+    totalHP += (Math.floor( ( ( getTotalAbilityScore(character, 3) - 10 ) / 2 ) )) * totalLevels;
+    buildXML += "\t\t<hp>\n";
+    if(character.deathSaves.failCount != null) {
+        buildXML += "\t\t\t<deathsavefail type=\"number\">" + character.deathSaves.failCount + "</deathsavefail>\n";
+    } else {
+        buildXML += "\t\t\t<deathsavefail type=\"number\">0</deathsavefail>\n";
+    }
+    if(character.deathSaves.successCount != null) {
+        buildXML += "\t\t\t<deathsavesuccess type=\"number\">" + character.deathSaves.successCount + "</deathsavesuccess>\n";
+    } else {
+        buildXML += "\t\t\t<deathsavesuccess type=\"number\">0</deathsavesuccess>\n";
+    }
+    buildXML += "\t\t\t<total type=\"number\">" + totalHP + "</total>\n";
+    buildXML += "\t\t</hp>\n";
+
     var languages = getObjects(character, 'type', 'language');
     buildXML += "\t\t<languagelist>\n";
-    languages.forEach(function(current_lang, i) {
+    languages.some(function(current_lang, i) {
         thisIteration = pad(i + 1, 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
         buildXML += "\t\t\t\t<name type=\"string\">" + capitalizeFirstLetter(current_lang.subType) + "</name>\n";
@@ -344,12 +417,29 @@ function parseCharacter(inputChar) {
     });
     buildXML += "\t\t</languagelist>\n";
 
-
+    character.race.racialTraits.some(function(current_trait, i) {
+        if(current_trait.definition.name == "Darkvision") {
+            buildXML += "\t\t<senses type=\"string\">Darkvision 60ft.</senses>\n";
+        }
+    });
+        
     buildXML += "\t\t<traitlist>\n";
-    character.race.racialTraits.forEach(function(current_trait, i) {
+    character.race.racialTraits.some(function(current_trait, i) {
+        switch (current_trait.definition.name) {
+            case "Ability Score Increase": case "Age": case "Alignment": case "Size": case "Speed": case "Darkvision":
+                return;
+            case "Dwarven Combat Training": case "Tool Proficiency": case "Languages": case "Dwarven Toughness":
+                return;
+            default:
+                break;
+        }
         thisIteration = pad(i + 1, 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
-        buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(current_trait.definition.name).trim() + ": " + remove_tags_traits(fixQuote(current_trait.definition.snippet)) + "</name>\n";
+        if (current_trait.definition.snippet != "" || current_trait.definition.snippet != null) {
+            buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(current_trait.definition.name).trim() + ": " + remove_tags_traits(fixQuote(current_trait.definition.snippet)) + "</name>\n";
+        } else {
+            buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(current_trait.definition.name).trim() + "</name>\n";
+        }
         buildXML += "\t\t\t\t<source type=\"string\">" + convert_case(replaceDash(character.race.baseName.toLowerCase())) + "</source>\n";
         buildXML += "\t\t\t\t<text type=\"formattedtext\">\n";
         buildXML += "\t\t\t\t\t<p>" + remove_tags_traits(fixQuote(current_trait.definition.description)) + "</p>\n";
@@ -359,23 +449,110 @@ function parseCharacter(inputChar) {
     });
     buildXML += "\t\t</traitlist>\n";
 
+    totalFeatures = 0;
     buildXML += "\t\t<featurelist>\n";
-    character.classes.forEach(function(current_class, i) {
+    character.classes.some(function(current_class, i) {
         classLevel = current_class.level;
-        current_class.definition.classFeatures.forEach(function(current_feature, j) {
+        current_class.definition.classFeatures.some(function(current_feature, j) {
+            //console.log(current_feature.name);
+            switch (current_feature.name) {
+                case "Hit Points": case "Proficiencies": case "Martial Archetype": case "Fighting Style":
+                case "Ability Score Improvement": case "Spellcasting": case "Oath Spells": case "Oath Spells":
+                case "Circle Spells": case "Bonus Cantrip": case "Bonus Proficiencies": case "Druidic":
+                case "Expanded Spell List": case "Otherwordly Patron": case "Expanded Spell List":
+                    return;
+                default:
+                    break;
+            }
             if(parseInt(current_feature.requiredLevel) <= parseInt(classLevel)) {
-                thisIteration = pad((j + 1) * (i + 1), 5);
-                buildXML += "\t\t\t<id-" + thisIteration + ">\n";
-                buildXML += "\t\t\t\t<locked type=\"number\">1</locked>\n";
-                buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(current_feature.name) + "</name>\n";
-                buildXML += "\t\t\t\t<source type=\"string\">" + convert_case(replaceDash(current_class.definition.name.toLowerCase())) + "</source>\n";
-                buildXML += "\t\t\t\t<text type=\"formattedtext\">\n";
-                buildXML += "\t\t\t\t\t<p>" + remove_tags_traits(fixQuote(current_feature.description)) + "</p>\n";
-                buildXML += "\t\t\t\t</text>\n";
-                buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+                if(holdFeatures.includes(current_class.definition.name)) {
+                    //Skip this one, it's already in the array
+                } else {
+                    holdFeatures.push(current_class.definition.name);
+                    totalFeatures += 1;
+                    thisIteration = pad(totalFeatures, 5);
+                    buildXML += "\t\t\t<id-" + thisIteration + ">\n";
+                    buildXML += "\t\t\t\t<locked type=\"number\">1</locked>\n";
+                    buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(current_feature.name) + "</name>\n";
+                    buildXML += "\t\t\t\t<source type=\"string\">" + convert_case(replaceDash(current_class.definition.name.toLowerCase())) + "</source>\n";
+                    buildXML += "\t\t\t\t<text type=\"formattedtext\">\n";
+                    buildXML += "\t\t\t\t\t<p>" + remove_tags_traits(fixQuote(current_feature.description)) + "</p>\n";
+                    buildXML += "\t\t\t\t</text>\n";
+                    buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+                }
             }
         });
+        if(current_class.hasOwnProperty("subclassDefinition")) {
+            if(current_class.subclassDefinition != null) {
+                if(holdFeatures.includes(current_class.subclassDefinition.name)) {
+                    // Skip this one, it's already in the array
+                } else {
+                    holdFeatures.push(current_class.subclassDefinition.name);
+                    totalFeatures += 1;
+                    thisIteration = pad(totalFeatures, 5);
+                    buildXML += "\t\t\t<id-" + thisIteration + ">\n";
+                    buildXML += "\t\t\t\t<locked type=\"number\">1</locked>\n";
+                    buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(current_class.subclassDefinition.name) + "</name>\n";
+                    //buildXML += "\t\t\t\t<source type=\"string\">" + convert_case(replaceDash(current_class.definition.name.toLowerCase())) + "</source>\n";
+                    buildXML += "\t\t\t\t<text type=\"formattedtext\">\n";
+                    buildXML += "\t\t\t\t\t<p>" + remove_tags_traits(fixQuote(current_class.subclassDefinition.description)) + "</p>\n";
+                    buildXML += "\t\t\t\t</text>\n";
+                    buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+                }
+                current_class.subclassDefinition.classFeatures.some(function(charSubClass, i) {
+                    switch (charSubClass.name) {
+                        case "Hit Points": case "Proficiencies": case "Martial Archetype": case "Fighting Style":
+                        case "Ability Score Improvement": case "Spellcasting": case "Oath Spells": case "Oath Spells":
+                        case "Circle Spells": case "Bonus Cantrip": case "Bonus Proficiencies": case "Druidic":
+                        case "Expanded Spell List": case "Otherwordly Patron": case "Expanded Spell List":
+                            return;
+                        default:
+                            break;
+                    }
+                    if(charSubClass.requiredLevel <= parseInt(classLevel)) {
+                        if(holdFeatures.includes(charSubClass.name)) {
+                            // Skip this one, it's already in the array
+                        } else {
+                            holdFeatures.push(charSubClass.name);
+                            totalFeatures += 1;
+                            thisIteration = pad(totalFeatures, 5);
+                            buildXML += "\t\t\t<id-" + thisIteration + ">\n";
+                            buildXML += "\t\t\t\t<locked type=\"number\">1</locked>\n";
+                            buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(charSubClass.name) + "</name>\n";
+                            //buildXML += "\t\t\t\t<source type=\"string\">" + convert_case(replaceDash(current_class.definition.name.toLowerCase())) + "</source>\n";
+                            buildXML += "\t\t\t\t<text type=\"formattedtext\">\n";
+                            buildXML += "\t\t\t\t\t<p>" + remove_tags_traits(fixQuote(charSubClass.description)) + "</p>\n";
+                            buildXML += "\t\t\t\t</text>\n";
+                            buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+                        }
+                    }
+                });
+            }
+        }
     });
+    const charOptions = character.options.class;
+    if (charOptions != null) charOptions.some(function(thisOption, i) {
+        //console.log(thisOption.definition.name);
+        switch (thisOption.definition.name) {
+            case "Hit Points": case "Proficiencies": case "Martial Archetype": case "Fighting Style":
+            case "Ability Score Improvement": case "Spellcasting": case "Oath Spells": case "Oath Spells":
+            case "Circle Spells": case "Bonus Cantrip": case "Bonus Proficiencies": case "Druidic":
+            case "Expanded Spell List": case "Otherwordly Patron": case "Expanded Spell List":
+                return;
+            default:
+                break;
+        }
+        totalFeatures += 1;
+        thisIteration = pad(totalFeatures, 5);
+        buildXML += "\t\t\t<id-" + thisIteration + ">\n";
+        buildXML += "\t\t\t\t<locked type=\"number\">1</locked>\n";
+        buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(thisOption.definition.name) + "</name>\n";
+        buildXML += "\t\t\t\t<text type=\"formattedtext\">\n";
+        buildXML += "\t\t\t\t\t<p>" + remove_tags_traits(fixQuote(thisOption.definition.description)) + "</p>\n";
+        buildXML += "\t\t\t\t</text>\n";
+        buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+    });
+    
     buildXML += "\t\t</featurelist>\n";
 
     // Character Inventory
@@ -388,7 +565,7 @@ function parseCharacter(inputChar) {
     buildXML += "\t\t<inventorylist>\n";
     const inventory = character.inventory;
     //console.log(inventory);
-    if(inventory != null) inventory.forEach(function(item, i) {
+    if(inventory != null) inventory.some(function(item, i) {
         thisIteration = pad(i + 1, 5);
         
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
@@ -398,6 +575,25 @@ function parseCharacter(inputChar) {
         
         if(item.definition.subType == null) {
             buildXML += "\t\t\t\t<type type=\"string\">" + fixQuote(item.definition.filterType) + "</type>\n";
+            if(item.definition.filterType == "Armor") {
+                if(item.definition.type != null || item.definition.type != "") {
+                    buildXML += "\t\t\t\t<subtype type=\"string\">" + fixQuote(item.definition.type) + "</subtype>\n";
+                    buildXML += "\t\t\t\t<ac type=\"number\">" + item.definition.armorClass + "</ac>\n";
+                }
+                if(item.definition.stealthCheck != null) {
+                    if(item.definition.stealthCheck == 2) {
+                        buildXML += "\t\t\t\t<stealth type=\"string\">Disadvantage</stealth>\n";
+                    } else {
+                        buildXML += "\t\t\t\t<stealth type=\"string\">-</stealth>\n";
+                    }
+                }
+                if(item.definition.strengthRequirement != null) {
+                    buildXML += "\t\t\t\t<strength type=\"string\">Str " + item.definition.strengthRequirement + "</strength>\n";
+                } else {
+                    buildXML += "\t\t\t\t<strength type=\"string\">-</strength>\n";
+                }
+                // We need to find where to find if armor allows dex bonus.
+            }
         } else {
             buildXML += "\t\t\t\t<type type=\"string\">" + fixQuote(item.definition.subType) + "</type>\n";
         }
@@ -412,7 +608,7 @@ function parseCharacter(inputChar) {
             
             buildXML += "\t\t\t\t<damage type=\"string\">" + item.definition.damage.diceString + " " + item.definition.damageType + "</damage>\n";
             thisProperties = "";
-            item.definition.properties.forEach(function(weapProp, i) {
+            item.definition.properties.some(function(weapProp, i) {
                 if(weapProp.name == "Ammunition" ) {
                     thisProperties += "Ammunition (" + item.definition.range + "/" + item.definition.longRange + "), ";
                 } else {
@@ -456,7 +652,7 @@ function parseCharacter(inputChar) {
     // weaponProperties.push(thisProperties);
     // weaponDice.push(item.definition.damage.diceString);
     // weaponType.push(item.definition.damageType.toLowerCase());
-    //weaponID.forEach(function(thisID, i) {
+    //weaponID.some(function(thisID, i) {
     //    console.log(weaponID[i]);
     //    console.log(weaponName[i]);
     //    console.log(weaponProperties[i]);
@@ -465,7 +661,7 @@ function parseCharacter(inputChar) {
     //});
     for(x = 0; x < weaponID.length; x++) {
         thisIteration = pad(x + 1, 5);
-        inventNum = pad(parseInt(weaponID[x]), 5)
+        inventNum = pad(parseInt(weaponID[x]), 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
         buildXML += "\t\t\t\t<shortcut type=\"windowreference\">\n";
 		buildXML += "\t\t\t\t\t<class>item</class>\n";
@@ -498,7 +694,7 @@ function parseCharacter(inputChar) {
 
     buildXML += "\t\t<featlist>\n";
     const charFeats = character.feats;
-    if (charFeats != null) charFeats.forEach(function(thisFeat, i) {
+    if (charFeats != null) charFeats.some(function(thisFeat, i) {
         thisIteration = pad(i + 1, 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
         buildXML += "\t\t\t\t<locked type=\"number\">1</locked>\n";
@@ -511,15 +707,24 @@ function parseCharacter(inputChar) {
     });
     buildXML += "\t\t</featlist>\n";
 
-
+    totalProfs = 0;
     buildXML += "\t\t<proficiencylist>\n";
     var proficiencies = getObjects(character, 'type', 'proficiency');
-    if(proficiencies != null) proficiencies.forEach(function(prof, i) {
-        thisIteration = pad(i + 1, 5);
-        buildXML += "\t\t\t<id-" + thisIteration + ">\n";
-        buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(prof.friendlySubtypeName) + "</name>\n";
-        buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+    if(proficiencies != null) proficiencies.some(function(prof, i) {
+        if(holdProf.includes(prof.friendlySubtypeName) || (prof.friendlySubtypeName).match(/Saving Throws/)) {
+            // Skip this one, it's already in the list, or is a saving throw.
+            //console.log("Skipping: " + prof.friendlySubtypeName);
+        } else {
+            //console.log("Adding: " + prof.friendlySubtypeName);
+            holdProf.push(prof.friendlySubtypeName);
+            thisIteration = pad(i + 1, 5);
+            totalProfs += 1;
+            buildXML += "\t\t\t<id-" + thisIteration + ">\n";
+            buildXML += "\t\t\t\t<name type=\"string\">" + fixQuote(prof.friendlySubtypeName) + "</name>\n";
+            buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+        }
     });
+
     buildXML += "\t\t</proficiencylist>\n";
 
     buildXML += "\t\t<exp type=\"number\">" + character.currentXp + "</exp>\n";
@@ -558,13 +763,19 @@ function parseCharacter(inputChar) {
 
     pactSlots = 0;
     pactLevel = 0;
-    character.classes.forEach(function(current_class, i) {
+    character.classes.some(function(current_class, i) {
         charClass = current_class.definition.name.toLowerCase();
-        if(charClass === "warlock"){
+        if(charClass === "warlock") {
             pactSlots = getPactMagicSlots(current_class.level);
             pactLevel = current_class.level;
         } else {
-            getSpellSlots(charClass, current_class.level);
+            if (current_class.hasOwnProperty("subclassDefinition")) {
+                if(current_class.subclassDefinition != null) {
+                    getSpellSlots(charClass, current_class.level, current_class.subclassDefinition.name);
+                }
+            } else {
+                getSpellSlots(charClass, current_class.level, null);
+            }
         }
     });
 
@@ -672,6 +883,15 @@ function parseCharacter(inputChar) {
     buildXML += "\t\t\t</slot6>\n";
     buildXML += "\t\t</coins>\n";
 
+    // Power Groups
+    buildXML += "\t\t<powergroup>\n";
+	buildXML += "\t\t\t<id-00001>\n";
+	buildXML += "\t\t\t\t<name type=\"string\">Resistances</name>\n";
+	buildXML += "\t\t\t</id-00001>\n";
+	buildXML += "\t\t\t<id-00002>\n";
+	buildXML += "\t\t\t\t<name type=\"string\">Immunities</name>\n";
+	buildXML += "\t\t\t</id-00002>\n";
+    buildXML += "\t\t</powergroup>\n";
 
     // Spells sourceId:
     //    1: Players Handbook?
@@ -695,7 +915,7 @@ function parseCharacter(inputChar) {
     //    8: day
     totalSpells = 0;
     buildXML += "\t\t<powers>\n";
-    character.spells.race.forEach(function(eachSpell, i) {
+    character.spells.race.some(function(eachSpell, i) {
         totalSpells += 1;
         thisIteration = pad(totalSpells, 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
@@ -770,7 +990,7 @@ function parseCharacter(inputChar) {
 
         buildXML += "\t\t\t</id-" + thisIteration + ">\n";
     });
-    character.spells.class.forEach(function(eachSpell, i) {
+    character.spells.class.some(function(eachSpell, i) {
         totalSpells += 1;
         thisIteration = pad(totalSpells, 5);
         buildXML += "\t\t\t<id-" + thisIteration + ">\n";
@@ -844,12 +1064,12 @@ function parseCharacter(inputChar) {
 
         buildXML += "\t\t\t</id-" + thisIteration + ">\n";
     });
-    character.classes.forEach(function(current_class, i) {
+    character.classes.some(function(current_class, i) {
 
-        for(var i in character.classSpells) {
-            var spells = character.classSpells[i];
-            if(character.classSpells[i].characterClassId == current_class.id) {
-                character.classSpells[i].spells.forEach(function(spell) {
+        for(var j in character.classSpells) {
+            var spells = character.classSpells[j];
+            if(character.classSpells[j].characterClassId == current_class.id) {
+                character.classSpells[j].spells.some(function(spell) {
                     totalSpells += 1;
                     thisIteration = pad(totalSpells, 5);
                     buildXML += "\t\t\t<id-" + thisIteration + ">\n";
@@ -925,10 +1145,127 @@ function parseCharacter(inputChar) {
             }
         }
     });
+    character.race.racialTraits.some(function(current_trait, i) {
+        fixedTrait = current_trait.definition.name.toLowerCase().replace(/ /g, "_");
+        //console.log(fixedTrait);
+        if(fixedTrait == "hellish_resistance") {
+            thisIteration = pad(totalSpells + 1, 5);
+            totalSpells += 1;
+            buildXML += "\t\t\t<id-" + thisIteration + ">\n";
+            buildXML += addTiefHellResist;
+            buildXML += "\t\t\t</id-" + thisIteration + ">\n";
+        }
+    });
     buildXML += "\t\t</powers>\n";
+
+    baseAC = 0;
+    shieldYes = 0;
+    shieldAC = 0;
+    dexBonus = 10;
+    armDis = 0;
+    armShieldProf = 0;
+    // max2DexArmor
+    // max3DexArmor
+    // fullDexArmor
+    // noDexArmor
+    character.inventory.some(function(eachInventory, i) {
+        if(eachInventory.definition.filterType == "Armor") {
+            if(eachInventory.equipped == true) {
+                baseAC += eachInventory.definition.armorClass;
+                if(eachInventory.definition.type == "Shield") {
+                    shieldYes = 1;
+                    shieldAC = eachInventory.definition.armorClass;
+                    baseAC -= shieldAC;
+                    if(holdProf.includes("Shields")) {
+                        // Shield is proficient
+                    } else {
+                        armShieldProf -= 1;
+                    }
+                } else {
+                    if(eachInventory.definition.stealthCheck == 2) {
+                        armDis = 1;
+                    }
+                    thisArmor = eachInventory.definition.name.toLowerCase().replace(/ /g, "_").replace(/-/g, "_");
+                    //console.log(thisArmor);
+                    //console.log(thisArmor);
+                    if(noDexArmor.includes(thisArmor)) {
+                        dexBonus = 0;
+                        if(holdProf.includes("Heavy Armor")) {
+                            // Proficient in heavy armor
+                        } else {
+                            armShieldProf -= 1;
+                        }
+                    } else if(max2DexArmor.includes(thisArmor)) {
+                        if(dexBonus > 2) {
+                            dexBonus = 2;
+                        }
+                        if(holdProf.includes("Medium Armor")) {
+                            // Proficient in medium armor
+                        } else {
+                            armShieldProf -= 1;
+                        }
+                    } else if(max3DexArmor.includes(thisArmor)) {
+                        if(dexBonus > 3) {
+                            dexBonus = 3;
+                        }
+                    } else if(fullDexArmor.includes(thisArmor)) {
+                        if(dexBonus > 4) {
+                            dexBonus = 4;
+                        }
+                        if(holdProf.includes("Light Armor")) {
+                            // Proficient in light armor
+                        } else {
+                            armShieldProf -= 1;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    //console.log("Dex bonus: " + dexBonus)
+
+    // We need to figure out dex bonus: full, max 3, max 2, none
+    buildXML += "\t\t<defenses>\n";
+    buildXML += "\t\t\t<ac>\n";
+    if(baseAC == 0) {
+        baseAC += 10;
+    }
+    buildXML += "\t\t\t\t<armor type=\"number\">" + (baseAC - 10) + "</armor>\n";
+    switch(dexBonus) {
+        case 0:
+            buildXML += "\t\t\t\t<dexbonus type=\"string\">no</dexbonus>\n";
+            break;
+        case 2:
+            buildXML += "\t\t\t\t<dexbonus type=\"string\">max2</dexbonus>\n";
+            break;
+        case 3:
+            buildXML += "\t\t\t\t<dexbonus type=\"string\">max3</dexbonus>\n";
+            break;
+    }
+    if(armDis == 1) {
+        buildXML += "\t\t\t\t<disstealth type=\"number\">1</disstealth>\n";
+    }
+	//
+    //buildXML += "\t\t\t\t<misc type=\"number\">0</misc>\n";
+    if(armShieldProf < 0) {
+        buildXML += "\t\t\t\t<prof type=\"number\">0</prof>\n";
+    } else {
+        buildXML += "\t\t\t\t<prof type=\"number\">1</prof>\n";
+    }
+    if(shieldYes == 1) {
+        buildXML += "\t\t\t\t<shield type=\"number\">" + shieldAC + "</shield>\n";
+    }
+	
+	buildXML += "\t\t\t\t<temporary type=\"number\">0</temporary>\n";
+	//buildXML += "\t\t\t\t<total type=\"number\">" + baseAC + "</total>\n";
+	buildXML += "\t\t\t</ac>\n";
+	buildXML += "\t\t</defenses>\n";
 
     allXML += buildXML + endXML;
     $('#textHere').val(allXML);
+
+   
 }
 
 const getTotalAbilityScore = function(character, scoreId) {
@@ -1053,7 +1390,7 @@ function convert_case(str) {
 }
 
 function remove_tags_traits(badString) {
-    return badString.replace(/\&lt\;p\&gt\;/g, '').replace(/\&lt\;\/p\&gt\;/g, '').replace(/\&lt\;\/span\&gt\;/g, '').replace(/\&lt\;span\&gt\;/g, '').replace(/\&rsquo\;/g, '\'').replace(/\&lt\;em\&gt\;/g, ' ').replace(/\&lt\;\/em\&gt\;/g, ' ').replace(/&lt\;br&gt\;/g, "\n").replace(/\&lt\;\/strong\&gt\;/g, '').replace(/\&lt\;strong\&gt\;/g, '').replace(/\&lt\;\/h\d\&gt\;/g, '').replace(/\&lt\;h\d\&gt\;/g, '').replace(/\&lt\;\/ul\&gt\;/g, '\n').replace(/\&lt\;ul\&gt\;/g, '\n').replace(/\&lt\;\/li\&gt\;/g, '\n').replace(/\&lt\;li\&gt\;/g, '\n')
+    return badString.replace(/\&lt\;p\&gt\;/g, '').replace(/\&lt\;\/p\&gt\;/g, '').replace(/\&lt\;\/span\&gt\;/g, '').replace(/\&lt\;span\&gt\;/g, '').replace(/\&rsquo\;/g, '\'').replace(/\&lt\;em\&gt\;/g, ' ').replace(/\&lt\;\/em\&gt\;/g, ' ').replace(/&lt\;br&gt\;/g, "\n").replace(/\&lt\;\/strong\&gt\;/g, '').replace(/\&lt\;strong\&gt\;/g, '').replace(/\&lt\;\/h\d\&gt\;/g, '').replace(/\&lt\;h\d\&gt\;/g, '').replace(/\&lt\;\/ul\&gt\;/g, '\n').replace(/\&lt\;ul\&gt\;/g, '\n').replace(/\&lt\;\/li\&gt\;/g, '\n').replace(/\&lt\;li\&gt\;/g, '\n').replace(/\&nbsp\;/g, ' ');
 }
 
 //const getFeatureSpells = function(character, traitId, featureType) {
@@ -1082,24 +1419,20 @@ const getPactMagicSlots = function(level) {
     switch(level){
         case 1:
             return 1;
-            break;
 
         case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10:
             return 2;
-            break;
 
         case 11: case 12: case 13: case 14: case 15: case 16:
             return 3;
-            break;
 
         default:
             return 4;
-            break;
     }
     return 0;
 };
 
-function getSpellSlots(slotClass, slotLevel) {
+function getSpellSlots(slotClass, slotLevel, slotSubClass) {
     //console.log("Class: " + slotClass);
     //console.log("Level: " + slotLevel);
     if((slotClass === "bard") || (slotClass === "cleric") || (slotClass === "druid") || (slotClass === "sorcerer") || (slotClass === "wizard")) {
@@ -1231,7 +1564,152 @@ function getSpellSlots(slotClass, slotLevel) {
             charSpellSlots7 = 2;
             charSpellSlots8 = 1;
             charSpellSlots9 = 1;
-        } 
+        }
+    } else if(slotClass === "paladin" || slotClass === "ranger") {
+        if (slotLevel == 2) {
+            charSpellSlots1 = 2;
+        } else if (slotLevel == 3) {
+            charSpellSlots1 = 3;
+        } else if (slotLevel == 4) {
+            charSpellSlots1 = 3;
+        } else if (slotLevel == 5) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 2;
+        } else if (slotLevel == 6) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 2;
+        } else if (slotLevel == 7) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+        } else if (slotLevel == 8) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+        } else if (slotLevel == 9) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 2;
+        } else if (slotLevel == 10) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 2;
+        } else if (slotLevel == 11) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+        } else if (slotLevel == 12) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+        } else if (slotLevel == 13) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 1;
+        } else if (slotLevel == 14) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 1;
+        } else if (slotLevel == 15) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 2;
+        } else if (slotLevel == 16) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 2;
+        } else if (slotLevel == 17) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 3;
+            charSpellSlots5 = 1;
+        } else if (slotLevel == 18) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 3;
+            charSpellSlots5 = 1;
+        } else if (slotLevel == 19) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 3;
+            charSpellSlots5 = 2;
+        } else if (slotLevel == 20) {
+            charSpellSlots1 = 4;
+            charSpellSlots2 = 3;
+            charSpellSlots3 = 3;
+            charSpellSlots4 = 3;
+            charSpellSlots5 = 2;
+        }
+    } else if((slotClass === "fighter" || slotClass === "rogue") && slotLevel >= 3 && slotSubClass != null) {
+        if(slotSubClass == "ArcaneTrickster" || slotSubClass == "Eldritch Knight") {
+            if (slotLevel == 3) {
+                charSpellSlots1 = 2;
+            } else if (slotLevel == 4) {
+                charSpellSlots1 = 3;
+            } else if (slotLevel == 5) {
+                charSpellSlots1 = 3;
+            } else if (slotLevel == 6) {
+                charSpellSlots1 = 3;
+            } else if (slotLevel == 7) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 2;
+            } else if (slotLevel == 8) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 2;
+            } else if (slotLevel == 9) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 2;
+            } else if (slotLevel == 10) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+            } else if (slotLevel == 11) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+            } else if (slotLevel == 12) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 3;
+            } else if (slotLevel == 13) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 2;
+            } else if (slotLevel == 14) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 2;
+            } else if (slotLevel == 15) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 2;
+            } else if (slotLevel == 16) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 3;
+            } else if (slotLevel == 17) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 3;
+            } else if (slotLevel == 18) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 3;
+            } else if (slotLevel == 19) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 3;
+                charSpellSlots4 = 1;
+            } else if (slotLevel == 20) {
+                charSpellSlots1 = 4;
+                charSpellSlots2 = 3;
+                charSpellSlots3 = 3;
+                charSpellSlots4 = 1;
+            }
+        }
     } else {
         //charSpellSlots1 = 0;
         //charSpellSlots2 = 0;
@@ -1244,3 +1722,26 @@ function getSpellSlots(slotClass, slotLevel) {
         //charSpellSlots9 = 0;
     }
 }
+  
+addTiefHellResist = " \
+\t\t\t\t<actions>\n \
+\t\t\t\t\t<id-00001>\n \
+\t\t\t\t\t\t<durmod type=\"number\">0</durmod>\n \
+\t\t\t\t\t\t<label type=\"string\">Hellish Resistance; RESIST: fire</label>\n \
+\t\t\t\t\t\t<order type=\"number\">1</order>\n \
+\t\t\t\t\t\t<targeting type=\"string\">self</targeting>\n \
+\t\t\t\t\t\t<type type=\"string\">effect</type>\n \
+\t\t\t\t\t</id-00001>\n \
+\t\t\t\t</actions>\n \
+\t\t\t\t<cast type=\"number\">0</cast>\n \
+\t\t\t\t<description type=\"formattedtext\">\n \
+\t\t\t\t\t<p>You have resistance to fire damage.</p>\n \
+\t\t\t\t</description>\n \
+\t\t\t\t<group type=\"string\">Resistances</group>\n \
+\t\t\t\t<level type=\"number\">0</level>\n \
+\t\t\t\t<locked type=\"number\">1</locked>\n \
+\t\t\t\t<name type=\"string\">Tiefling: Hellish Resistance</name>\n \
+\t\t\t\t<prepared type=\"number\">0</prepared>\n \
+\t\t\t\t<ritual type=\"number\">0</ritual>\n \
+\t\t\t\t<source type=\"string\">Tiefling</source>\n \
+\t\t\t\t<type type=\"string\">racial</type>\n";

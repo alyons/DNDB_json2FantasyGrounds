@@ -7,39 +7,35 @@
         <link rel="stylesheet" type="text/css" href="css/styles/jqx.base.css">
         <link rel="stylesheet" type="text/css" href="css/styles/jqx.darkblue.css">
         <link rel="stylesheet" type="text/css" href="css/app.css">
-        <title>D&amp;D Beyond to Fantasy Grounds Character Converter</title>
+        <title>Learning SAP</title>
     </head>
-    <body>
+    <body class="default">
       <div class="container">
         <div id="header">
-          D&amp;D Beyond to Fantasy Grounds Character Converter
+          <!--D&amp;D Beyond to Fantasy Grounds Character Converter-->
+          Data Parsing - Cobalt & Micro Services
         </div>
-        <b>PASTE DATA HERE:</b><br />
-        <textarea id="charJSON" cols="150" rows="10"></textarea><br /><br />
-        <button id="get-data">Parse JSON data</button>&nbsp;&nbsp;&nbsp;<button id="dlChar">Download XML</button>
-        <textarea id="textHere" cols="150" rows="10"></textarea><br />
-        <center><h2>Instructions</h2></center>
+        <br /><br />
+        <!--<b>Character ID:&nbsp;&nbsp;<input type="text" id="getcharID">&nbsp;&nbsp;<button id="grabChar">Get Character Data</button></b><br /><br />-->
+        <b>Realm ID:&nbsp;&nbsp;<input type="text" id="getcharID">&nbsp;&nbsp;<button id="grabChar">Get Realm Data</button></b><br /><br />
+        <div id="popCharID"></div>
+        <textarea id="textHere"></textarea><br />
+        <button id="dlChar">Download XML</button><br /><br />
         <hr />
+        <center><h2>Instructions</h2></center>
         <pre>
 Log into your <a href="https://www.dndbeyond.com/my-content/characters" target="_blank">D&amp;D Beyond Account</a>.
 Move your mouse over the 'Characters' tab at the top of the window and select 'My Characters'.
 Find the character you want to convert and click 'View'.
 Take a look at the Address bar, it should look something like:
-https://www.dndbeyond.com/profile/YourUserName/characters/8675309
+https://www.dndbeyond.com/profile/YourUserName/characters/<b>8675309</b>
 
-At the end of this ULR, add '/json/', so it looks like this:
-https://www.dndbeyond.com/profile/YourUserName/characters/8675309/json/
-Then hit &lt;enter&gt;/&lt;return&gt;
+Find the Character ID, in this case is <b>8675309</b>.
+Paste this ID in the 'Character ID' text box and click 'Get Character Data'.
 
-Put your cursor anywhere in the text and hit Ctrl-a (Windows) or Cmd-a (Mac) to select all the data.
-Next hit Ctrl-c (Windows) or Cmd-c (Mac) to Copy the data to the clipboard.
-After you've done that, come back to this page and put your mouse cursor inside the box that's labeled: <b>PASTE DATA HERE</b>
-
-Now hit Ctrl-v (Windows) or Cmd-v (Mac) to Paste the data from the clipboard to the box.
 It will take a few seconds or more (30?) in order for the data to populate.
 This all depends on how fast your computer is, as it's pasting a whole lot of data.
 
-Next, click the 'Parse JSON data' button, and after a few seconds, the lower box should populate.
 Click the 'Download XML' button and the data that's in the lower box will be saved to your computer.
 
 This file is the one that you want to import into Fantasy Grounds.
