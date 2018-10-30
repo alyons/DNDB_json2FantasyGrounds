@@ -1428,31 +1428,28 @@ const getPactMagicSlots = function(level) {
 
 function getSpellSlots(classes) {
     let isFullCaster = (className) => {
-        className = className.toLowerCase();
-        return (className == 'bard' || className == 'cleric' || className == 'druid' || className == 'sorcerer' || className == 'wizard');
+        return (className == 'Bard' || className == 'Cleric' || className == 'Druid' || className == 'Sorcerer' || className == 'Wizard');
     };
 
     let isHalfCaster = (className) => {
-        className = className.toLowerCase();
-        return (className == 'paladin' || className == 'ranger');
+        return (className == 'Paladin' || className == 'Ranger');
     }
 
     let isThirdCaster = (className, subclassName) => {
-        return (className == 'fighter' && subclassName == 'Eldritch Knight' || className == 'rogue' && subclassName == 'Arcane Trickster');
+        return (className == 'Fighter' && subclassName == 'Eldritch Knight' || className == 'Rogue' && subclassName == 'Arcane Trickster');
     }
 
     let casterLevel = 0;
 
     if (classes.length > 1 || isFullCaster(classes[0].definition.name)) {
         classes.some(function(current_class) {
-            className = current_class.definition.name.toLowerCase();
-            subclassName = current_class.subclassDefinition;
-
+            className = current_class.definition.name;
+            subclassName = (!!current_class.subclassDefinition) ? current_class.subclassDefinition.name : null;
             if (isFullCaster(className)) {
                 casterLevel += current_class.level;
             } else if (isHalfCaster(className)) {
                 casterLevel += Math.floor(current_class.level / 2);
-            } else if (isThirdCaster(className, subclassDefinition)) {
+            } else if (isThirdCaster(className, subclassName)) {
                 casterLevel += Math.floor(current_class.level / 3);
             }
         });
@@ -1470,11 +1467,11 @@ function getSpellSlots(classes) {
         casterLevel = classes[0].level;
 
         charSpellSlots1 = (casterLevel < 2) ? 0 : (casterLevel < 3) ? 2 : (casterLevel < 5) ? 3 : 4;
-        charSpellSlots2 = (casterLevel < 3) ? 0 : (casterLevel < 4) ? 2 : 3;
+        charSpellSlots2 = (casterLevel < 5) ? 0 : (casterLevel < 7) ? 2 : 3;
         charSpellSlots3 = (casterLevel < 9) ? 0 : (casterLevel < 11) ? 2 : 3;
         charSpellSlots4 = (casterLevel < 13) ? 0 : (casterLevel < 15) ? 1 : (casterLevel < 17) ? 2 : 3;
         charSpellSlots5 = (casterLevel < 17) ? 0 : (casterLevel < 19) ? 1 : 2;
-    } else if (isThirdCaster(classes[0].definition.name, classes[0].subclassDefinition)) {
+    } else if (isThirdCaster(classes[0].definition.name, (classes[0].subclassDefinition) ? classes[0].subclassDefinition.name : null)) {
         casterLevel = classes[0].level;
 
         charSpellSlots1 = (casterLevel < 3) ? 0 : (casterLevel < 4) ? 2 : (casterLevel < 7) ? 3 : 4;
