@@ -1441,39 +1441,58 @@ const getPactMagicSlots = function(level) {
 };
 
 function getSpellSlots(classes) {
-    let casterLevel = 0;
-    classes.some(function(current_class) {
-        className = current_class.definition.name.toLowerCase();
-        switch(className) {
-            case 'bard':
-            case 'cleric':
-            case 'druid':
-            case 'sorcerer':
-            case 'wizard':
-                casterLevel += current_class.level;
-                break;
-            case 'paladin':
-            case 'ranger':
-                casterLevel += Math.floor(current_class.level / 2);
-                break;
-            case 'fighter':
-                if (current_class.subclassDefinition == "Eldritch Knight") { casterLevel += Math.floor(current_class.level / 3); }
-                break;
-            case 'rogue':
-                if (current_class.subclassDefinition == "Arcane Trickster") { casterLevel += Math.floor(current_class.level / 3); }
-                break;
-        }
-    });
+    let isFullCaster = (className) => {
+        return (className == 'Bard' || className == 'Cleric' || className == 'Druid' || className == 'Sorcerer' || className == 'Wizard');
+    };
 
-    charSpellSlots1 = (casterLevel < 1) ? 0 : (casterLevel < 2) ? 2 : (casterLevel < 3) ? 3 : 4;
-    charSpellSlots2 = (casterLevel < 3) ? 0 : (casterLevel < 4) ? 2 : 3;
-    charSpellSlots3 = (casterLevel < 5) ? 0 : (casterLevel < 6) ? 2 : 3;
-    charSpellSlots4 = (casterLevel < 7) ? 0 : (casterLevel < 8) ? 1 : (casterLevel < 9) ? 2 : 3;
-    charSpellSlots5 = (casterLevel < 9) ? 0 : (casterLevel < 10) ? 1 : (casterLevel < 18) ? 2 : 3;
-    charSpellSlots6 = (casterLevel < 11) ? 0 : (casterLevel < 19) ? 1 : 2;
-    charSpellSlots7 = (casterLevel < 13) ? 0 : (casterLevel < 20) ? 1 : 2;
-    charSpellSlots8 = (casterLevel < 15) ? 0 : 1
-    charSpellSlots9 = (casterLevel < 17) ? 0 : 1;
+    let isHalfCaster = (className) => {
+        return (className == 'Paladin' || className == 'Ranger');
+    }
+
+    let isThirdCaster = (className, subclassName) => {
+        return (className == 'Fighter' && subclassName == 'Eldritch Knight' || className == 'Rogue' && subclassName == 'Arcane Trickster');
+    }
+
+    let casterLevel = 0;
+
+    if (classes.length > 1 || isFullCaster(classes[0].definition.name)) {
+        classes.some(function(current_class) {
+            className = current_class.definition.name;
+            subclassName = (!!current_class.subclassDefinition) ? current_class.subclassDefinition.name : null;
+            if (isFullCaster(className)) {
+                casterLevel += current_class.level;
+            } else if (isHalfCaster(className)) {
+                casterLevel += Math.floor(current_class.level / 2);
+            } else if (isThirdCaster(className, subclassName)) {
+                casterLevel += Math.floor(current_class.level / 3);
+            }
+        });
+
+        charSpellSlots1 = (casterLevel < 1) ? 0 : (casterLevel < 2) ? 2 : (casterLevel < 3) ? 3 : 4;
+        charSpellSlots2 = (casterLevel < 3) ? 0 : (casterLevel < 4) ? 2 : 3;
+        charSpellSlots3 = (casterLevel < 5) ? 0 : (casterLevel < 6) ? 2 : 3;
+        charSpellSlots4 = (casterLevel < 7) ? 0 : (casterLevel < 8) ? 1 : (casterLevel < 9) ? 2 : 3;
+        charSpellSlots5 = (casterLevel < 9) ? 0 : (casterLevel < 10) ? 1 : (casterLevel < 18) ? 2 : 3;
+        charSpellSlots6 = (casterLevel < 11) ? 0 : (casterLevel < 19) ? 1 : 2;
+        charSpellSlots7 = (casterLevel < 13) ? 0 : (casterLevel < 20) ? 1 : 2;
+        charSpellSlots8 = (casterLevel < 15) ? 0 : 1
+        charSpellSlots9 = (casterLevel < 17) ? 0 : 1;
+    } else if (isHalfCaster(classes[0].definition.name)) {
+        casterLevel = classes[0].level;
+
+        charSpellSlots1 = (casterLevel < 2) ? 0 : (casterLevel < 3) ? 2 : (casterLevel < 5) ? 3 : 4;
+        charSpellSlots2 = (casterLevel < 5) ? 0 : (casterLevel < 7) ? 2 : 3;
+        charSpellSlots3 = (casterLevel < 9) ? 0 : (casterLevel < 11) ? 2 : 3;
+        charSpellSlots4 = (casterLevel < 13) ? 0 : (casterLevel < 15) ? 1 : (casterLevel < 17) ? 2 : 3;
+        charSpellSlots5 = (casterLevel < 17) ? 0 : (casterLevel < 19) ? 1 : 2;
+    } else if (isThirdCaster(classes[0].definition.name, (classes[0].subclassDefinition) ? classes[0].subclassDefinition.name : null)) {
+        casterLevel = classes[0].level;
+
+        charSpellSlots1 = (casterLevel < 3) ? 0 : (casterLevel < 4) ? 2 : (casterLevel < 7) ? 3 : 4;
+        charSpellSlots2 = (casterLevel < 7) ? 0 : (casterLevel < 10) ? 2 : 3;
+        charSpellSlots3 = (casterLevel < 13) ? 0 : (casterLevel < 16) ? 2 : 3;
+        charSpellSlots4 = (casterLevel < 19) ? 0 : 1;
+    }
 }
   
 addTiefHellResist = " \
